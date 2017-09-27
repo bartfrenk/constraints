@@ -1,10 +1,6 @@
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import UniqueConstraint
 
 from constraints.base import InstanceOf, MaxSize, Dict, BaseConstraints
-
-from constraints._models import Base, Template
 
 
 class FromModel(BaseConstraints):
@@ -14,7 +10,10 @@ class FromModel(BaseConstraints):
         self.constraints = self._create(key_map)
 
     def check(self, val, **ctx):
-        return self.constraints(val, **ctx)
+        errors = []
+        for c in self.constraints:
+            errors.extend(c.check(val, **ctx))
+        return errors
 
     def _create(self, key_map):
         key_map = key_map or (lambda x: x)
@@ -32,9 +31,15 @@ class FromModel(BaseConstraints):
                 constraints.setdefault(key, []).append(MaxSize(ty.length))
             for fk in iter(col.foreign_keys):
                 constraints.setdefault(key, []).append(ForeignKeyExists(fk))
+
+        duplicates = []
+        for cons in self._model.__table__.constraints:
+            if isinstance(cons, UniqueConstraint):
+                duplicates.append(Unique(cons, key_map))
         root = Dict(**constraints)
         root.optional = optional
-        return root
+        duplicates.append(root)
+        return duplicates
 
     def __repr__(self):
         return '<{}({})>'.format(self.__class__.__name__,
@@ -54,24 +59,23 @@ class ForeignKeyExists(BaseConstraints):
             return ["does_not_exist"]
         return []
 
-def to_camel_case(snake_str):
-    components = snake_str.split('_')
-    return components[0] + "".join(x.title() for x in components[1:])
 
-c = FromModel(Template, to_camel_case)
+class Unique(BaseConstraints):
 
-x = {
-    "templateSetId": 2,
-    "templateId": 1,
-    "width": 1200,
-    "height": 800,
-    "readyForUse": True,
-    "name": "TestTemplate" + 80 * "as"
-}
+    def __init__(self, unique, key_map=None):
+        self._unique = unique
+        self._key_map = key_map or (lambda x: x)
 
-
-def init_db():
-    url = "postgresql://docker:docker@localhost:15433/docker"
-    engine = create_engine(url, echo=True)
-    Base.metadata.create_all(bind=engine)
-    return sessionmaker(bind=engine)
+    def check(self, val, **ctx):
+        session = ctx['session']
+        cols = list(self._unique.columns)
+        exists = False
+        if all(self._key_map(col.key) in val for col in cols):
+            filters = [col == val[self._key_map(col.key)] for col in cols]
+            exists = session.query(cols[0]).filter(*filters).first()
+        if exists:
+            keys = [col for col in cols if not col.foreign_keys]
+            if len(keys) == 1:
+                return [{self._key_map(keys[0].key): "duplicate"}]
+            return ["duplicate"]
+        return []
