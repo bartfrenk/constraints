@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
+from constraints.error import Error
+
 
 class BaseConstraints(object):
 
@@ -21,9 +23,9 @@ class Generic(BaseConstraints):
 
     def check(self, val, **ctx):
         if not self._pred(val):
-            return [self._code]
+            return Error(self._code)
         else:
-            return []
+            return Error()
 
     def __repr__(self):
         return "<{}({})>".format(self.__class__.__name__, self._code)
@@ -56,32 +58,32 @@ class Dict(BaseConstraints):
 
     def check(self, val, **ctx):
         if not isinstance(val, dict):
-            return ['wrong-type']
+            return Error('wrong-type')
         root = {}
         for (key, constraints) in self._fields.items():
-            errors = []
+            errors = Error()
             if key not in val:
                 if key not in self.optional:
-                    errors.append('missing')
+                    errors.merge(Error('missing'))
             else:
                 for c in constraints:
-                    merge_with(errors, c.check(val[key], **ctx))
+                    errors.merge(c.check(val[key], **ctx))
             if errors:
                 root[key] = errors
         if root:
-            return [root]
+            return Error(root)
         else:
-            return []
+            return Error()
 
 
-def merge_with(first, second):
-    first.extend(second)
-    # for y in second:
-    #     if isinstance(y, dict):
-    #         for (key, val) in y.items():
-    #             for x in first:
-    #                 if isinstance(x, dict):
-    #                     if 
-    #                     merge_with(x[key], val)
-    #     else:
-    #         first.append(y)
+
+class All(BaseConstraints):
+
+    def __init__(self, *constraints):
+        self._constraints = list(constraints)
+
+    def check(self, val, **ctx):
+        err = Error()
+        for c in self._constraints:
+            err.merge(c.check(val, **ctx))
+        return err

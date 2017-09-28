@@ -1,6 +1,7 @@
 from sqlalchemy import UniqueConstraint
 
-from constraints.base import InstanceOf, MaxSize, Dict, BaseConstraints, merge_with
+from constraints.base import InstanceOf, MaxSize, Dict, BaseConstraints
+from constraints.error import Error
 
 
 class FromModel(BaseConstraints):
@@ -10,9 +11,9 @@ class FromModel(BaseConstraints):
         self.constraints = self._create(key_map)
 
     def check(self, val, **ctx):
-        errors = []
+        errors = Error()
         for c in self.constraints:
-            merge_with(errors, c.check(val, **ctx))
+            errors.merge(c.check(val, **ctx))
         return errors
 
     @classmethod
@@ -62,8 +63,8 @@ class ForeignKeyExists(BaseConstraints):
         column = self._fk.column
         exists = session.query(column).filter(column == val).first()
         if not exists:
-            return ["does_not_exist"]
-        return []
+            return Error("does_not_exist")
+        return Error()
 
 
 class Unique(BaseConstraints):
@@ -82,6 +83,6 @@ class Unique(BaseConstraints):
         if exists:
             keys = [col for col in cols if not col.foreign_keys]
             if len(keys) == 1:
-                return [{self._key_map(keys[0].key): ["duplicate"]}]
-            return ["duplicate"]
-        return []
+                return Error({self._key_map(keys[0].key): Error("duplicate")})
+            return Error("duplicate")
+        return Error()
