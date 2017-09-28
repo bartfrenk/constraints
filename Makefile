@@ -28,6 +28,14 @@ help: ## Show this help
 report-lint: ## Run PEP8 and PyLint linters
 report-lint: report-pylint report-pep8
 
+report-coverage: ## Compute code coverage
+report-coverage: venv
+	@echo "Computing code coverage of unit tests..."
+	@. venv/bin/activate; \
+	PYTHONPATH=. \
+	coverage run --rcfile=./setup.cfg --source constraints/ -m py.test tests && \
+	coverage report -m
+
 .PHONY: report-pep8
 report-pep8: ## Run PEP8
 report-pep8: venv
