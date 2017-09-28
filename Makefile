@@ -1,5 +1,14 @@
 .DEFAULT_GOAL:=help
 
+.PHONY: clean
+clean: ## Remove all generated files
+	@rm -rf doc/build
+	@rm -rf venv
+
+.PHONY: build-docs
+build-docs: ## Build Sphinx documentation
+build-docs: docs/build/index.html
+
 .PHONY: docker-db-run
 docker-db-run: ## Run docker container with database
 	docker run -d --name constraints-db \
@@ -35,9 +44,8 @@ report-pylint: venv
 	PYTHONPATH=. \
 	pylint --rcfile setup.cfg --reports=n ${PKG_NAME} tests
 
-
 .PHONY: setup
-setup: ##Create Python virtualenv to run application in
+setup: ## Create Python virtualenv
 setup: venv
 
 .PHONY: test
@@ -46,9 +54,17 @@ test: venv
 	@. venv/bin/activate; \
 	py.test -s ./tests
 
+docs/build/index.html: venv docs/source/* constraints/*
+	@. venv/bin/activate; \
+	PYTHONPATH=. \
+	sphinx-build -b html docs/source docs/build
+
 venv: requirements.txt test-requirements.txt
 	virtualenv $@; \
 	. ./$@/bin/activate; \
 	pip install -r requirements.txt; \
 	pip install -r test-requirements.txt
 	@touch venv
+
+
+

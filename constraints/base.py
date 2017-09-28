@@ -1,14 +1,27 @@
+"""Defines basic constraint objects."""
 from abc import ABCMeta, abstractmethod
 
 from constraints.error import Error
 
 
 class BaseConstraints(object):
+    """Abstract base class for constraints."""
 
     __metaclass__ = ABCMeta
 
     @abstractmethod
     def check(self, val, **ctx):
+        """Check argument for constraints within a context.
+
+        :param val: The value to check.
+        :param ctx: The context to run the check in, for example, this might
+            include a database session.
+
+        :returns: An non-trivial Error object when the argument does not satisfy
+                  the constraints, or Error() when it does.
+
+        :rtype: An Error object.
+        """
         pass
 
     def __call__(self, val, **ctx):
@@ -16,8 +29,14 @@ class BaseConstraints(object):
 
 
 class Generic(BaseConstraints):
+    """Generic constraint from a predicate."""
 
     def __init__(self, code, pred):
+        """Create a generic constraint.
+
+        :param code: On error, the constraint returns Error(code).
+        :param pred: The predicate to check for.
+        """
         self._code = code
         self._pred = pred
 
@@ -32,14 +51,17 @@ class Generic(BaseConstraints):
 
 
 def MaxSize(n):
+    """Create generic constraint on the length of the value."""
     return Generic('max-size', lambda v: len(v) <= n)
 
 
 def InstanceOf(cls):
+    """Create generic constraint on the type of the value."""
     return Generic('wrong-type', lambda v: isinstance(v, cls))
 
 
 class Dict(BaseConstraints):
+    """Composite constraint on a Python dict."""
 
     def __init__(self, **fields):
         self._fields = fields

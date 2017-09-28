@@ -1,6 +1,8 @@
 class Error(object):
+    """Output of a constraint check."""
 
     def __init__(self, *contents):
+
         self._top = []
         self._nested = {}
         for err in contents:
@@ -10,6 +12,11 @@ class Error(object):
                 self._nested.update(err)
 
     def merge(self, err):
+        """Merge the argument into this Error object.
+
+        :param err: The Error object to merge.
+        :rtype: An Error object
+        """
         # pylint: disable=protected-access
         self._top.extend(err._top)
         for (key, child) in err._nested.items():
@@ -19,6 +26,11 @@ class Error(object):
                 self._nested[key] = child
 
     def unwrap(self):
+        """
+        Convert the error object to a tree-like structure consisting of lists
+        and dicts. The leaves of the tree are strings.
+        """
+
         result = self._top
         if self._nested:
             d = {key: err.unwrap() for (key, err) in self._nested.items()}

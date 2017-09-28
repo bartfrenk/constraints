@@ -1,3 +1,4 @@
+"""Create constraint objects from SQLAlchemy models."""
 from sqlalchemy import UniqueConstraint
 
 from constraints.base import InstanceOf, MaxSize, Dict, BaseConstraints
@@ -7,6 +8,12 @@ from constraints.error import Error
 class FromModel(BaseConstraints):
 
     def __init__(self, model, key_map=None):
+        """Create constraints from a SQLAlchemy model.
+
+        :param model: The model to derive the constraints from.
+        :param key_map: The map from column names to allowed keys in the dict.
+        """
+
         self._model = model
         self.constraints = self._create(key_map)
 
