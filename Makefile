@@ -15,6 +15,27 @@ help: ## Show this help
 	@fgrep -h "##" $(MAKEFILE_LIST) | \
 	fgrep -v fgrep | sed -e 's/## */##/' | column -t -s##
 
+.PHONY: report-lint
+report-lint: ## Run PEP8 and PyLint linters
+report-lint: report-pylint report-pep8
+
+.PHONY: report-pep8
+report-pep8: ## Run PEP8
+report-pep8: venv
+	@echo "Checking for pep8 warnings..."
+	@. venv/bin/activate; \
+	PYTHONPATH=. \
+	pep8 ${PKG_NAME} tests
+
+.PHONY: report-pylint
+report-pylint: ## Run PyLint
+report-pylint: venv
+	@echo "Checking for pylint warnings..."
+	@. venv/bin/activate; \
+	PYTHONPATH=. \
+	pylint --rcfile setup.cfg --reports=n ${PKG_NAME} tests
+
+
 .PHONY: setup
 setup: ##Create Python virtualenv to run application in
 setup: venv

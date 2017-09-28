@@ -1,6 +1,7 @@
 # pylint: disable=no-self-use
 from constraints.error import Error
 
+
 class TestError(object):
 
     def test_merge_list_of_atomic_errors(self):
