@@ -11,8 +11,8 @@ is a database session, and `obj` is the object to validate.
 
 ```python
 >>> from constraints.declarative import ToModel
->>> cn = ToModel(Child, session=session)
->>> cn.check(obj)
+>>> cn = ToModel(Child)
+>>> cn.check(obj, session=session)
 ```
 
 ## Setup
