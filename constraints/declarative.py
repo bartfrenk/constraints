@@ -15,6 +15,12 @@ class FromModel(BaseConstraints):
             errors.extend(c.check(val, **ctx))
         return errors
 
+    @classmethod
+    def _is_optional(cls, col):
+        return col.nullable or col.primary_key or \
+            col.default is not None or \
+            col.server_default is not None
+
     def _create(self, key_map):
         key_map = key_map or (lambda x: x)
 
@@ -23,7 +29,7 @@ class FromModel(BaseConstraints):
         for col in self._model.__table__.columns:
             ty = col.type
             key = key_map(col.key)
-            if col.nullable:
+            if self._is_optional(col):
                 optional.add(key)
             if hasattr(ty, "python_type"):
                 constraints.setdefault(key, []).append(InstanceOf(ty.python_type))
@@ -76,6 +82,6 @@ class Unique(BaseConstraints):
         if exists:
             keys = [col for col in cols if not col.foreign_keys]
             if len(keys) == 1:
-                return [{self._key_map(keys[0].key): "duplicate"}]
+                return [{self._key_map(keys[0].key): ["duplicate"]}]
             return ["duplicate"]
         return []
