@@ -1,6 +1,6 @@
 from sqlalchemy import UniqueConstraint
 
-from constraints.base import InstanceOf, MaxSize, Dict, BaseConstraints
+from constraints.base import InstanceOf, MaxSize, Dict, BaseConstraints, merge_with
 
 
 class FromModel(BaseConstraints):
@@ -12,7 +12,7 @@ class FromModel(BaseConstraints):
     def check(self, val, **ctx):
         errors = []
         for c in self.constraints:
-            errors.extend(c.check(val, **ctx))
+            merge_with(errors, c.check(val, **ctx))
         return errors
 
     @classmethod

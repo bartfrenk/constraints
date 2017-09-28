@@ -65,7 +65,23 @@ class Dict(BaseConstraints):
                     errors.append('missing')
             else:
                 for c in constraints:
-                    errors.extend(c.check(val[key], **ctx))
+                    merge_with(errors, c.check(val[key], **ctx))
             if errors:
                 root[key] = errors
-        return [root]
+        if root:
+            return [root]
+        else:
+            return []
+
+
+def merge_with(first, second):
+    first.extend(second)
+    # for y in second:
+    #     if isinstance(y, dict):
+    #         for (key, val) in y.items():
+    #             for x in first:
+    #                 if isinstance(x, dict):
+    #                     if 
+    #                     merge_with(x[key], val)
+    #     else:
+    #         first.append(y)

@@ -50,6 +50,16 @@ class DictTest(object):
         actual = cn.check({})
         assert [] == actual
 
+    def test_return_empty_list_on_success(self):
+        cn = sut.Dict(key=[sut.InstanceOf(bool)])
+        actual = cn.check({"key": True})
+        assert [] == actual
+
+    def test_return_wrong_type_on_non_dict(self):
+        cn = sut.Dict(key=[sut.InstanceOf(bool)])
+        actual = cn.check("test")
+        assert ["wrong-type"] == actual
+
 
 class GenericTest(object):
 
