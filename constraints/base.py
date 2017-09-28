@@ -19,7 +19,6 @@ class Generic(BaseConstraints):
         self._code = code
         self._pred = pred
 
-
     def check(self, val, **ctx):
         if not self._pred(val):
             return [self._code]
@@ -70,5 +69,3 @@ class Dict(BaseConstraints):
             if errors:
                 root[key] = errors
         return [root]
-
-
