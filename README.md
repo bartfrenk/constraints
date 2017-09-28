@@ -1,7 +1,19 @@
 # Constraints
 
-Validation of Python objects. Validators return all violations, instead of only
-the first. Automatically derive constraints from SQLAlchemy models.
+- Flexible validation of Python objects.
+- Validators return all violations, instead of only the first.
+- Automatically derive constraints from SQLAlchemy models.
+
+## Example
+
+To create and run a validator from a SQLAlchemy model `Child`, where `session`
+is a database session, and `obj` is the object to validate.
+
+```python
+>>> from constraints.declarative import ToModel
+>>> cn = ToModel(Child)
+>>> cn.check(obj)
+```
 
 ## Setup
 
