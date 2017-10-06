@@ -62,6 +62,13 @@ test: venv
 	@. venv/bin/activate; \
 	py.test -s ./tests
 
+.PHONY: run
+run: ## Runs the web application
+run: venv
+	@. venv/bin/activate; \
+	PYTHONPATH=. FLASK_APP=resources FLASK_DEBUG=1 \
+	flask run
+
 docs/build/index.html: venv docs/source/* constraints/*
 	@. venv/bin/activate; \
 	PYTHONPATH=. \
