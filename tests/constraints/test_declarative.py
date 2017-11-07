@@ -90,10 +90,3 @@ class TestDeclarative(object):
                           session=sess, within=owner)
 
         assert actual == Error({"parent_id": Error("does-not-exist")})
-
-
-class TestUtils(object):
-
-    def test_neighbors(self):
-        actual = sut.neighbors(Child.__table__)
-        import pdb; pdb.set_trace()
