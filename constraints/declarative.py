@@ -18,7 +18,8 @@ class FromModel(BaseConstraints):
         """
         self._model = model
         self._forbidden = forbidden or set()
-        self.constraints = self._create(key_map)
+        self._key_map = key_map or (lambda x: x)
+        self.constraints = self._create()
 
     def check(self, val, **ctx):
         errors = Error()
@@ -32,14 +33,16 @@ class FromModel(BaseConstraints):
             col.default is not None or \
             col.server_default is not None
 
-    def _create(self, key_map):
-        key_map = key_map or (lambda x: x)
+    def _create_dict_constraint(self, key_map):
+        pass
+
+    def _create(self):
 
         constraints = {}
         optional = set()
         for col in self._model.__table__.columns:
             ty = col.type
-            key = key_map(col.key)
+            key = self._key_map(col.key)
             if self._is_optional(col):
                 optional.add(key)
             constraints[key] = []
@@ -58,10 +61,10 @@ class FromModel(BaseConstraints):
         duplicates = []
         for cons in self._model.__table__.constraints:
             if isinstance(cons, UniqueConstraint):
-                duplicates.append(Unique(cons, key_map))
+                duplicates.append(Unique(cons, self._key_map))
         root = Dict(**constraints)
         root.optional = optional
-        root.forbidden = {key_map(key) for key in self._forbidden}
+        root.forbidden = {self._key_map(key) for key in self._forbidden}
         duplicates.append(root)
         return duplicates
 
