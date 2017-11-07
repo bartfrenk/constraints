@@ -70,7 +70,6 @@ class FromModel(BaseConstraints):
 
     def add_constraint(self, constraint):
         self._holistic_cns.append(constraint)
-        
 
     def __repr__(self):
         return '<{}({})>'.format(self.__class__.__name__,
@@ -82,12 +81,24 @@ class ForeignKeyExists(BaseConstraints):
     def __init__(self, fk):
         self._fk = fk
 
+    @staticmethod
+    def _create_within_filter(pk_column, within):
+        fks = pk_column.table.foreign_keys
+        refs = [(fk, fk.get_referent(within.__table__).key) for fk in fks if
+                fk.references(within.__table__)]
+        return [fk.parent == getattr(within, key) for (fk, key) in refs]
+
     def check(self, val, **ctx):
         if 'session' not in ctx:
             return Error()
         session = ctx['session']
+        filters = []
         column = self._fk.column
-        exists = session.query(column).filter(column == val).first()
+        filters.append(column == val)
+        if 'within' in ctx:
+            within = ctx['within']
+            filters.extend(self._create_within_filter(column, within))
+        exists = session.query(column).filter(*filters).first()
         if not exists:
             return Error("does-not-exist")
         return Error()

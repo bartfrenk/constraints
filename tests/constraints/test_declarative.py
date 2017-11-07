@@ -18,10 +18,16 @@ def sess():
 Base = declarative_base()
 
 
+class Owner(Base):
+    __tablename__ = "owner"
+
+    owner_id = Column(Integer, primary_key=True)
+
 class Parent(Base):
     __tablename__ = "parent"
 
     parent_id = Column(Integer, primary_key=True)
+    owner_id = Column(Integer, ForeignKey("owner.owner_id"))
 
 
 class Child(Base):
@@ -67,7 +73,20 @@ class TestDeclarative(object):
     def test_duplicate_field_merges_with_other_errors(self, sess):
         cn = sut.FromModel(Child)
         sess.add(Parent(parent_id=1))
-        sess.add(Child(name=11 * "x", parent_id=1))
+        sess.add(Child(child_id=1, name=11 * "x", parent_id=1))
 
-        actual = cn.check({"child_id": 314, "parent_id": 1, "name": 11 * "x"}, session=sess)
+        actual = cn.check({"child_id": 2, "parent_id": 1, "name": 11 * "x"},
+                          session=sess)
         assert actual == Error({"name": Error("max-size", "duplicate")})
+
+    def test_consider_foreign_key_dangling_when_out_of_context(self, sess):
+        cn = sut.FromModel(Child)
+        owner = Owner(owner_id=1)
+        sess.add(owner)
+        sess.add(Owner(owner_id=2))
+        sess.add(Parent(parent_id=1, owner_id=2))
+
+        actual = cn.check({"parent_id": 1, "name": "x"},
+                          session=sess, within=owner)
+
+        assert actual == Error({"parent_id": Error("does-not-exist")})
