@@ -107,8 +107,7 @@ class Dict(BaseConstraints):
                 root[key] = errors
         if root:
             return Error(root)
-        else:
-            return Error()
+        return Error()
 
 
 class All(BaseConstraints):

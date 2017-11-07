@@ -1,5 +1,6 @@
 import json
 
+
 class Error(object):
     """Output of a constraint check."""
 
