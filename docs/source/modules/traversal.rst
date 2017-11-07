@@ -6,6 +6,8 @@
 constraints.traversal
 =====================
 
+Compute disjoint paths from a starting node to all other nodes in a digraph.
+
 Given a digraph represented as a dict of nodes to neighbors,
 
 .. code-block:: python

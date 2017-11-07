@@ -23,6 +23,24 @@ class FromModel(BaseConstraints):
         self._root_cns = self._create_root_cns()
 
     def check(self, val, **ctx):
+        """Check constraints on value.
+
+        :param val: The value to check.
+        :param ctx: The context in which to run the check, this may include the
+            following keyword parameters:
+
+                - session: The SQLAlchemy session, passing this allows the
+                  checker to do database queries to verify constraints.
+
+                - within: A SQLAlchemy entity, if passed, foreign keys are
+                  considered dangling if they refer to an entity whose model has
+                  a foreign key relation to the model of the entity passed to
+                  within, but that foreign key does not refer to the `within`
+                  entity.
+
+        :returns: A falsy `Error` object, if constraints are not satisfied, the
+                  truthy one otherwise.
+        """
         errors = self._per_field_cns(val, **ctx)
         for c in self._root_cns:
             errors.merge(c.check(val, **ctx))
