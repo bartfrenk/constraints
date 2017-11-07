@@ -1,9 +1,13 @@
 .DEFAULT_GOAL:=help
+PKG_NAME=constraints
 
 .PHONY: clean
 clean: ## Remove all generated files
 	@rm -rf doc/build
 	@rm -rf venv
+	@rm -rf build
+	@rm -rf dist
+	@rm -rf ${PKG_NAME}.egg-info
 
 .PHONY: build-docs
 build-docs: ## Build Sphinx documentation
@@ -11,7 +15,7 @@ build-docs: docs/build/index.html
 
 .PHONY: docker-db-run
 docker-db-run: ## Run docker container with database
-	docker run -d --name constraints-db \
+	docker run -d --name ${PKG_NAME}-db \
 		-p 15433:5432 \
 		-e POSTGRES_USER=docker \
 		-e POSTGRES_PASSWORD=docker \
@@ -33,7 +37,7 @@ report-coverage: venv
 	@echo "Computing code coverage of unit tests..."
 	@. venv/bin/activate; \
 	PYTHONPATH=. \
-	coverage run --rcfile=./setup.cfg --source constraints/ -m py.test tests && \
+	coverage run --rcfile=./setup.cfg --source ${PKG_NAME}/ -m py.test tests && \
 	coverage report -m
 
 .PHONY: report-pep8
@@ -69,7 +73,19 @@ run: venv
 	PYTHONPATH=. FLASK_APP=resources FLASK_DEBUG=1 \
 	flask run
 
-docs/build/index.html: venv docs/source/* constraints/*
+.PHONY: upload
+upload: ## Upload the package to a repository in ~/.pypirc
+upload:
+	python setup.py sdist
+	python setup.py bdist_wheel --universal
+	twine upload --repository ${REPOSITORY} dist/*
+
+.PHONY: upload
+upload-test: ## Upload the package to PyPi repository 'testpypi'
+upload-test: REPOSITORY=testpypi
+upload-test: upload
+
+docs/build/index.html: venv docs/source/* ${PKG_NAME}/*
 	@. venv/bin/activate; \
 	PYTHONPATH=. \
 	sphinx-build -b html docs/source docs/build
