@@ -20,11 +20,11 @@ class FromModel(BaseConstraints):
         self._forbidden = forbidden or set()
         self._key_map = key_map or (lambda x: x)
         self._per_field_cns = self._create_per_field_cns()
-        self._holistic_cns = self._create_holistic_cns()
+        self._root_cns = self._create_root_cns()
 
     def check(self, val, **ctx):
         errors = self._per_field_cns(val, **ctx)
-        for c in self._holistic_cns:
+        for c in self._root_cns:
             errors.merge(c.check(val, **ctx))
         return errors
 
@@ -61,15 +61,15 @@ class FromModel(BaseConstraints):
                                    for key in self._forbidden}
         return per_field_cns
 
-    def _create_holistic_cns(self):
-        holistic_cns = []
+    def _create_root_cns(self):
+        root_cns = []
         for cons in self._model.__table__.constraints:
             if isinstance(cons, UniqueConstraint):
-                holistic_cns.append(Unique(cons, self._key_map))
-        return holistic_cns
+                root_cns.append(Unique(cons, self._key_map))
+        return root_cns
 
     def add_constraint(self, constraint):
-        self._holistic_cns.append(constraint)
+        self._root_cns.append(constraint)
 
     def __repr__(self):
         return '<{}({})>'.format(self.__class__.__name__,
