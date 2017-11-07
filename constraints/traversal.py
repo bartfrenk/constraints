@@ -1,4 +1,4 @@
-from collections import deque
+from collections import deque, defaultdict
 
 
 def multipaths(adj_fn, start):
@@ -30,7 +30,7 @@ def bfs(adj_fn, start):
     """
     todo = deque()
     visited = set([])
-    edges_to = {}
+    edges_to = defaultdict(list)
 
     visited.add(start)
     todo.appendleft(start)
@@ -38,7 +38,7 @@ def bfs(adj_fn, start):
         v = todo.pop()
         for w in adj_fn(v):
             if w not in visited:
-                edges_to[w] = [v]
+                edges_to[w].append(v)
                 visited.add(w)
                 todo.appendleft(w)
             else:
