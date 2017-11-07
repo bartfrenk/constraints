@@ -68,6 +68,12 @@ test: venv
 	@. venv/bin/activate; \
 	py.test -s ./tests
 
+test-watch: ## Run all unit tests in continuous testing mode
+test-watch: venv
+	@. venv/bin/activate; \
+	PYTHONPATH=. \
+	ptw --clear -q ./tests ./${PKG_NAME} -- -s ./tests
+
 .PHONY: run
 run: ## Runs the web application
 run: venv
