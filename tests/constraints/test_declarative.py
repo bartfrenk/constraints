@@ -70,4 +70,4 @@ class TestDeclarative(object):
         sess.add(Child(name=11 * "x", parent_id=1))
 
         actual = cn.check({"child_id": 314, "parent_id": 1, "name": 11 * "x"}, session=sess)
-        assert actual == Error({"name": Error("duplicate", "max-size")})
+        assert actual == Error({"name": Error("max-size", "duplicate")})

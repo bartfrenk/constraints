@@ -19,11 +19,12 @@ class FromModel(BaseConstraints):
         self._model = model
         self._forbidden = forbidden or set()
         self._key_map = key_map or (lambda x: x)
-        self.constraints = self._create()
+        self._per_field_cns = self._create_per_field_cns()
+        self._holistic_cns = self._create_holistic_cns()
 
     def check(self, val, **ctx):
-        errors = Error()
-        for c in self.constraints:
+        errors = self._per_field_cns(val, **ctx)
+        for c in self._holistic_cns:
             errors.merge(c.check(val, **ctx))
         return errors
 
@@ -33,11 +34,7 @@ class FromModel(BaseConstraints):
             col.default is not None or \
             col.server_default is not None
 
-    def _create_dict_constraint(self, key_map):
-        pass
-
-    def _create(self):
-
+    def _create_per_field_cns(self):
         constraints = {}
         optional = set()
         for col in self._model.__table__.columns:
@@ -58,18 +55,22 @@ class FromModel(BaseConstraints):
             for fk in iter(col.foreign_keys):
                 constraints[key].append(ForeignKeyExists(fk))
 
-        duplicates = []
+        per_field_cns = Dict(**constraints)
+        per_field_cns.optional = optional
+        per_field_cns.forbidden = {self._key_map(key)
+                                   for key in self._forbidden}
+        return per_field_cns
+
+    def _create_holistic_cns(self):
+        holistic_cns = []
         for cons in self._model.__table__.constraints:
             if isinstance(cons, UniqueConstraint):
-                duplicates.append(Unique(cons, self._key_map))
-        root = Dict(**constraints)
-        root.optional = optional
-        root.forbidden = {self._key_map(key) for key in self._forbidden}
-        duplicates.append(root)
-        return duplicates
+                holistic_cns.append(Unique(cons, self._key_map))
+        return holistic_cns
 
     def add_constraint(self, constraint):
-        self.constraints.append(constraint)
+        self._holistic_cns.append(constraint)
+        
 
     def __repr__(self):
         return '<{}({})>'.format(self.__class__.__name__,
