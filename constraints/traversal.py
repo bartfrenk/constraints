@@ -1,11 +1,12 @@
 from collections import deque, defaultdict
 
 
-def multipaths(adj_fn, start):
+def multipaths(adj_fn, start, singles=False):
     """List disjoint paths from start to all reachable vertices.
 
     :param adj_fn: The adjacency function of the graph, see `bfs`.
     :param start: The starting node, see `bfs`.
+    :param singles: Also return nodes that are reachable by a single path.
 
     :returns: A dict with keys the nodes reachable from `start` by multiple
               paths, and values a list of disjoint paths from `start` to that
@@ -14,7 +15,7 @@ def multipaths(adj_fn, start):
     edges_to = bfs(adj_fn, start)
     paths = {}
     for (key, ws) in edges_to.items():
-        if len(ws) > 1:
+        if len(ws) > 1 or singles:
             paths[key] = [_backtrack(edges_to, w) + [key] for w in ws]
     return paths
 
