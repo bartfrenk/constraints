@@ -48,7 +48,7 @@ class TestDeclarative(object):
     def test_dangling_foreign_key_returns_error(self, sess):
         cn = sut.FromModel(Child)
         actual = cn.check({"child_id": 1, "parent_id": 1, "name": "x"}, session=sess)
-        assert actual == Error({"parent_id": Error("does_not_exist")})
+        assert actual == Error({"parent_id": Error("does-not-exist")})
 
     def test_existing_foreign_key_passes(self, sess):
         cn = sut.FromModel(Child)
@@ -61,7 +61,7 @@ class TestDeclarative(object):
         sess.add(Parent(parent_id=1))
         sess.add(Child(name="x", parent_id=1))
 
-        actual = cn.check({"child_id": 1, "parent_id": 1, "name": "x"}, session=sess)
+        actual = cn.check({"child_id": 314, "parent_id": 1, "name": "x"}, session=sess)
         assert actual == Error({"name": Error("duplicate")})
 
     def test_duplicate_field_merges_with_other_errors(self, sess):
@@ -69,5 +69,5 @@ class TestDeclarative(object):
         sess.add(Parent(parent_id=1))
         sess.add(Child(name=11 * "x", parent_id=1))
 
-        actual = cn.check({"child_id": 1, "parent_id": 1, "name": 11 * "x"}, session=sess)
+        actual = cn.check({"child_id": 314, "parent_id": 1, "name": 11 * "x"}, session=sess)
         assert actual == Error({"name": Error("duplicate", "max-size")})

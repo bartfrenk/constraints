@@ -7,4 +7,4 @@ dist/
 MANIFEST
 build/
 constraints.egg-info/
-
+trash/

@@ -1,3 +1,5 @@
+import json
+
 class Error(object):
     """Output of a constraint check."""
 
@@ -10,6 +12,8 @@ class Error(object):
                 self._top.append(err)
             if isinstance(err, dict):
                 self._nested.update(err)
+            if isinstance(err, list):
+                raise ValueError('content cannot be a list')
 
     def merge(self, err):
         """Merge the argument into this Error object.
@@ -36,6 +40,9 @@ class Error(object):
             d = {key: err.unwrap() for (key, err) in self._nested.items()}
             result.append(d)
         return result
+
+    def to_json(self):
+        return json.dumps(self.unwrap())
 
     def __eq__(self, err):
         # pylint: disable=protected-access

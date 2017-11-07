@@ -1,7 +1,7 @@
 """Defines basic constraint objects."""
 from abc import ABCMeta, abstractmethod
 
-from constraints.error import Error
+from .error import Error
 
 
 class BaseConstraints(object):
@@ -66,6 +66,7 @@ class Dict(BaseConstraints):
     def __init__(self, **fields):
         self._fields = fields
         self._optional = set()
+        self._forbidden = set()
 
     @property
     def optional(self):
@@ -78,6 +79,17 @@ class Dict(BaseConstraints):
                 raise ValueError('{} is not a key'.format(key))
         self._optional = keys
 
+    @property
+    def forbidden(self):
+        return self._forbidden
+
+    @forbidden.setter
+    def forbidden(self, keys):
+        for key in keys:
+            if key not in set(self._fields.keys()):
+                raise ValueError('{} is not a key'.format(key))
+        self._forbidden = keys
+
     def check(self, val, **ctx):
         if not isinstance(val, dict):
             return Error('wrong-type')
@@ -85,8 +97,10 @@ class Dict(BaseConstraints):
         for (key, constraints) in self._fields.items():
             errors = Error()
             if key not in val:
-                if key not in self.optional:
+                if key not in self.optional and key not in self.forbidden:
                     errors.merge(Error('missing'))
+            elif key in self.forbidden:
+                errors.merge(Error('forbidden'))
             else:
                 for c in constraints:
                     errors.merge(c.check(val[key], **ctx))
@@ -96,7 +110,6 @@ class Dict(BaseConstraints):
             return Error(root)
         else:
             return Error()
-
 
 
 class All(BaseConstraints):
