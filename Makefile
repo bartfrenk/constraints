@@ -1,6 +1,8 @@
 .DEFAULT_GOAL:=help
 PKG_NAME=constraints
 
+# TODO: change this to work with pyenv for virtualenvs
+
 .PHONY: clean
 clean: ## Remove all generated files
 	@rm -rf doc/build
