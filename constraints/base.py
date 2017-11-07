@@ -43,8 +43,7 @@ class Generic(BaseConstraints):
     def check(self, val, **ctx):
         if not self._pred(val):
             return Error(self._code)
-        else:
-            return Error()
+        return Error()
 
     def __repr__(self):
         return "<{}({})>".format(self.__class__.__name__, self._code)
