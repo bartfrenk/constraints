@@ -79,6 +79,8 @@ class ForeignKeyExists(BaseConstraints):
         self._fk = fk
 
     def check(self, val, **ctx):
+        if 'session' not in ctx:
+            return Error()
         session = ctx['session']
         column = self._fk.column
         exists = session.query(column).filter(column == val).first()
@@ -106,6 +108,8 @@ class Unique(BaseConstraints):
             return False
 
     def check(self, val, **ctx):
+        if 'session' not in ctx:
+            return Error()
         session = ctx['session']
         cols = list(self._unique.columns)
         exists = False
