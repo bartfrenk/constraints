@@ -2,13 +2,14 @@ from collections import deque, defaultdict
 
 
 def multipaths(adj_fn, start):
-    """Lists disjoint paths from start to all reachable vertices.
+    """List disjoint paths from start to all reachable vertices.
 
     :param adj_fn: The adjacency function of the graph, see `bfs`.
     :param start: The starting node, see `bfs`.
 
-    :returns: A dict with keys the nodes reachable from `start`, and values a
-              list of disjoint paths from `start` to that node.
+    :returns: A dict with keys the nodes reachable from `start` by multiple
+              paths, and values a list of disjoint paths from `start` to that
+              node.
     """
     edges_to = bfs(adj_fn, start)
     paths = {}
@@ -19,11 +20,11 @@ def multipaths(adj_fn, start):
 
 
 def bfs(adj_fn, start):
-    """Does breadth-first traversal of a digraph.
+    """Traverse a digraph in breadth-first order.
 
     :param adj_fn: The adjacency function of the graph, i.e., it maps a vertex v
         to a the list of w such that (v, w) is an arc in the digraph.
-    :param start: The node at which to start the search.
+    :param start: The node at which to start the traversal.
 
     :returns: A dict with keys the nodes reachable from start and values a list
               of penultimate nodes of path that connect them to start.

@@ -8,5 +8,3 @@ constraints.error
 
 .. automodule:: constraints.error
    :members:
-.. autoclass:: constraints.error.Error
-   :members:

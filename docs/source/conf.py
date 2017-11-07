@@ -172,6 +172,3 @@ texinfo_documents = [
      author, 'Constraints', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-

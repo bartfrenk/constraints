@@ -13,3 +13,4 @@ The Constraints package
    modules/base
    modules/error
    modules/declarative
+   modules/traversal
