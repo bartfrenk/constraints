@@ -11,7 +11,7 @@
 
 ### Cons
 
-- More queries than hand-crafted validation.
+- More queries than hand-crafted validation (this might be improved, but is non-trivial).
 - Less flexible (but also less room for mistakes and divergence).
 
 ## Example
