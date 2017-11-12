@@ -1,4 +1,5 @@
 """Create constraint objects from SQLAlchemy models."""
+from __future__ import print_function
 from datetime import datetime
 from sqlalchemy import UniqueConstraint
 
@@ -7,7 +8,6 @@ from .error import Error
 
 
 class FromModel(BaseConstraints):
-
     def __init__(self, model, key_map=None, forbidden=None):
         """
         Create constraints from a SQLAlchemy model.
@@ -90,20 +90,18 @@ class FromModel(BaseConstraints):
         self._root_cns.append(constraint)
 
     def __repr__(self):
-        return '<{}({})>'.format(self.__class__.__name__,
-                                 self._model.__name__)
+        return '<{}({})>'.format(self.__class__.__name__, self._model.__name__)
 
 
 class ForeignKeyExists(BaseConstraints):
-
     def __init__(self, fk):
         self._fk = fk
 
     @staticmethod
     def _create_within_filter(pk_column, within):
         fks = pk_column.table.foreign_keys
-        refs = [(fk, fk.get_referent(within.__table__).key) for fk in fks if
-                fk.references(within.__table__)]
+        refs = [(fk, fk.get_referent(within.__table__).key) for fk in fks
+                if fk.references(within.__table__)]
         return [fk.parent == getattr(within, key) for (fk, key) in refs]
 
     def check(self, val, **ctx):
@@ -123,8 +121,8 @@ class ForeignKeyExists(BaseConstraints):
 
 
 class Unique(BaseConstraints):
-
     def __init__(self, unique, key_map=None):
+        # TODO: better name for unique, and document
         self._unique = unique
         self._pk = self._primary_key(unique)
         self._key_map = key_map or (lambda x: x)
@@ -155,3 +153,61 @@ class Unique(BaseConstraints):
                 return Error({self._key_map(keys[0].key): Error("duplicate")})
             return Error("duplicate")
         return Error()
+
+
+from traversal import multipaths
+
+
+def adj(tb):
+    return [fk.column.table for fk in tb.foreign_keys]
+
+
+def find_paths(model):
+    paths = multipaths(adj, model)
+    return paths
+
+
+class MultiPathConstraint(BaseConstraints):
+    def __init__(self, paths, key_map=None):
+        self._key_map = key_map or (lambda x: x)
+        self._paths = paths
+        self._foreign_keys = self._get_foreign_keys(paths)
+
+    def _get_foreign_keys(self, paths):
+        result = {}
+        base = self._paths[0][0]
+        for fk in base.foreign_keys:
+            for path in paths:
+                if fk.references(path[1]):
+                    result[fk.parent.name] = (fk.column, path)
+        return result
+
+    def check(self, val, **ctx):
+        if 'session' not in ctx:
+            return Error()
+        session = ctx['session']
+
+        if not isinstance(val, dict):
+            return Error()
+
+        results = set()
+        for (field, v) in val.items():
+            key = self._key_map(field)
+            if key in self._foreign_keys:
+                path = self._foreign_keys[key][1]
+                query = self._path_query(session, path, v)
+                for row in query:
+                    results.add(row)
+        import pdb
+        pdb.set_trace()
+
+        # TODO: add in val to constrain the result of query
+        # 1. build list of triples (foreign key, relevant keys in val, path)
+
+    @staticmethod
+    def _path_query(session, path, val):
+        it = reversed(path[1:])
+        query = session.query(next(it))
+        for tb in it:
+            query = query.join(tb)
+        return query
