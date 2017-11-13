@@ -195,3 +195,20 @@ class TestMultiPathConstraints(object):
                            "parent_c_id": 1},
                           session=sess)
         assert actual
+
+
+class TestCreateMultiPathConstraints(object):
+    def test_find_all_multi_path_constraints(self):
+        # pylint: disable=protected-access
+        actual = sut.create_multi_path_constraints(GrandChild.__table__)
+        expected = sut.MultiPathConstraint(
+            [[GrandChild.__table__, ChildA.__table__, Parent.__table__],
+             [GrandChild.__table__, ChildB.__table__, Parent.__table__]])
+
+        assert len(actual) == 1
+        assert actual[0]._foreign_keys == expected._foreign_keys
+
+    def test_ignore_multi_path_constraints_ending_in_ignore_set(self):
+        actual = sut.create_multi_path_constraints(GrandChild.__table__,
+                                                   ignore={Parent.__table__})
+        assert not actual

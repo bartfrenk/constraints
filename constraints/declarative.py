@@ -158,7 +158,7 @@ class Unique(BaseConstraints):
 
 class MultiPathConstraint(BaseConstraints):
     """A multi-path constraint checks whether two distinct foreing key chains,
-    starting at some base model lead to the same instance.  For example,
+    starting at some base table lead to the same instance.  For example,
 
     Given the following chains of foreign keys (with the table containing the
     foreign key at the tail of the arrow):
@@ -187,22 +187,7 @@ class MultiPathConstraint(BaseConstraints):
                   `Error` object otherwise.
         """
         self._key_map = key_map or (lambda x: x)
-        self._paths = paths
         self._foreign_keys = self._get_foreign_keys(paths)
-
-    def _get_foreign_keys(self, paths):
-        """
-        Construct a dict of the foreign key fields in the joint start of the
-        paths, to a tuple containing the column referred to by the foreign key
-        in the second table in the path, and the path itself.
-        """
-        result = {}
-        base = self._paths[0][0]
-        for fk in base.foreign_keys:
-            for path in paths:
-                if fk.references(path[1]):
-                    result[fk.parent.name] = (fk.column, path)
-        return result
 
     def check(self, val, **ctx):
         """Check the MultiPath constraint on `val`.
@@ -230,8 +215,22 @@ class MultiPathConstraint(BaseConstraints):
         return Error({"bla": Error("")})
 
     @staticmethod
+    def _get_foreign_keys(paths):
+        """
+        Construct a dict of the foreign key fields in the joint start of the
+        paths, to a tuple containing the column referred to by the foreign key
+        in the second table in the path, and the path itself.
+        """
+        result = {}
+        base = paths[0][0]
+        for fk in base.foreign_keys:
+            for path in paths:
+                if fk.references(path[1]):
+                    result[fk.parent.name] = (fk.column, path)
+        return result
+
+    @staticmethod
     def _path_query(session, fk_column, path, v):
-        """Create a query that returns the instance at the end of the path."""
         it = reversed(path[1:])
         query = session.query(next(it))
         for tb in it:
@@ -239,9 +238,26 @@ class MultiPathConstraint(BaseConstraints):
         return query.filter(fk_column == v)
 
 
-def create_multi_path_constraints(model):
+def create_multi_path_constraints(start_tbl, key_map=None, ignore=None):
+    """Create the complete list of multi-path constraints that start at
+    `start_tbl`.  Ignores paths that end in a table contained in `ignore`.
+
+    :param start_tbl: The table for which to create the multi-path constraints.
+    :param key_map: The key map, mapping fields of the value to check to
+        attributes of the model.
+
+    :returns: A list of `MultiPathConstraint` instances, one for each set of
+              multi-paths starting from `start_tbl` and ending in a table not in
+              `ignore`.
+    """
+    ignore = ignore or set()
+
     def adj(tb):
         return [fk.column.table for fk in tb.foreign_keys]
 
-    paths = multi_paths(adj, model)
-    return paths
+    constraints = []
+    end_tbl_to_paths = multi_paths(adj, start_tbl)
+    for (end_tbl, paths) in end_tbl_to_paths.items():
+        if end_tbl not in ignore:
+            constraints.append(MultiPathConstraint(paths, key_map))
+    return constraints
