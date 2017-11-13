@@ -92,7 +92,10 @@ class TestMultiPathConstraints(object):
 
         actual = cn.check({"parent_a_id": 1, "parent_b_id": 1}, session=sess)
 
-        assert actual
+        unwrapped = actual.unwrap()
+        assert len(unwrapped) == 1
+        assert set(*unwrapped[0].keys()) == {"parent_a_id", "parent_b_id"}
+        assert unwrapped[0].values() == [["mismatch (parent)"]]
 
     def test_error_when_some_paths_lead_to_different_object(self, sess):
         sess.add(Parent(parent_id=1))
@@ -113,7 +116,12 @@ class TestMultiPathConstraints(object):
                            "parent_b_id": 1,
                            "parent_c_id": 1},
                           session=sess)
-        assert actual
+
+        unwrapped = actual.unwrap()
+        assert len(unwrapped) == 1
+        assert set(*unwrapped[0].keys()) == {"parent_a_id", "parent_b_id",
+                                             "parent_c_id"}
+        assert unwrapped[0].values() == [["mismatch (parent)"]]
 
 
 class TestCreateMultiPathConstraints(object):

@@ -203,6 +203,7 @@ class MultiPathConstraint(BaseConstraints):
             return Error()
 
         results = set()
+        mismatches = []
         for (field, v) in val.items():
             key = self._key_map(field)
             if key in self._foreign_keys:
@@ -210,9 +211,11 @@ class MultiPathConstraint(BaseConstraints):
                 query = self._path_query(session, fk_column, path, v)
                 for row in query:
                     results.add(row)
+                    mismatches.append(key)
         if len(results) == 1:
             return Error()
-        return Error({"bla": Error("")})
+        return Error({tuple(mismatches):
+                      Error("mismatch ({})".format(self._end_table_name))})
 
     @staticmethod
     def _get_foreign_keys(paths):
@@ -222,12 +225,16 @@ class MultiPathConstraint(BaseConstraints):
         in the second table in the path, and the path itself.
         """
         result = {}
-        base = paths[0][0]
-        for fk in base.foreign_keys:
+        start = paths[0][0]
+        for fk in start.foreign_keys:
             for path in paths:
                 if fk.references(path[1]):
                     result[fk.parent.name] = (fk.column, path)
         return result
+
+    @property
+    def _end_table_name(self):
+        return self._foreign_keys.values()[0][-1][-1].name
 
     @staticmethod
     def _path_query(session, fk_column, path, v):
