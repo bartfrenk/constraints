@@ -1,8 +1,18 @@
 # Constraints
 
+## Introduction
+
+### Pros
+
 - Flexible validation of Python objects.
 - Validators return all violations, instead of only the first.
 - Automatically derive constraints from SQLAlchemy models.
+- Errors have a uniform format.
+
+### Cons
+
+- More queries than hand-crafted validation (this might be improved, but that is non-trivial).
+- Less flexible (but also less room for mistakes and divergence).
 
 ## Example
 
