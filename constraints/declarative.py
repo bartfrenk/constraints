@@ -194,20 +194,21 @@ class MultiPathConstraint(BaseConstraints):
         for (field, v) in val.items():
             key = self._key_map(field)
             if key in self._foreign_keys:
-                path = self._foreign_keys[key][1]
-                query = self._path_query(session, path, v)
+                (fk_column, path) = self._foreign_keys[key]
+                query = self._path_query(session, fk_column, path, v)
                 for row in query:
                     results.add(row)
-        import pdb
-        pdb.set_trace()
+        if len(results) == 1:
+            return Error()
+        return Error({"bla": Error("")})
 
         # TODO: add in val to constrain the result of query
         # 1. build list of triples (foreign key, relevant keys in val, path)
 
     @staticmethod
-    def _path_query(session, path, val):
+    def _path_query(session, fk_column, path, v):
         it = reversed(path[1:])
         query = session.query(next(it))
         for tb in it:
             query = query.join(tb)
-        return query
+        return query.filter(fk_column == v)
