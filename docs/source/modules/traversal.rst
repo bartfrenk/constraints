@@ -20,9 +20,9 @@ Given a digraph represented as a dict of nodes to neighbors,
             5: [1, 3],
             6: [2]}
 
-Run `multipaths` as follows:
+Run `multi_paths` as follows:
 
->>> multipaths(lambda i: gamma[i], 0)
+>>> multi_paths(lambda i: gamma[i], 0)
 
 .. automodule:: constraints.traversal
    :members:

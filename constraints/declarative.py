@@ -5,6 +5,7 @@ from sqlalchemy import UniqueConstraint
 
 from .base import InstanceOf, MaxSize, Dict, BaseConstraints
 from .error import Error
+from .traversal import multi_paths
 
 
 class FromModel(BaseConstraints):
@@ -155,25 +156,46 @@ class Unique(BaseConstraints):
         return Error()
 
 
-from traversal import multipaths
-
-
-def adj(tb):
-    return [fk.column.table for fk in tb.foreign_keys]
-
-
-def find_paths(model):
-    paths = multipaths(adj, model)
-    return paths
-
-
 class MultiPathConstraint(BaseConstraints):
+    """A multi-path constraint checks whether two distinct foreing key chains,
+    starting at some base model lead to the same instance.  For example,
+
+    Given the following chains of foreign keys (with the table containing the
+    foreign key at the tail of the arrow):
+
+        - GrandChild --> ChildA --> Parent
+
+        - GrandChild --> ChildB --> Parent
+
+    and a dict of values `val` for the ChildA and ChildB foreign keys in
+    GrandChild.  A multi-path constraint of the list of paths ``[[GrandChild,
+    ChildA, Parent], [GrandChild, ChildB, Parent]]``, checks whether the ChildA
+    and ChildB instances referred to by the foreign keys in `val` point to the
+    same Parent instance, and it returns a truthy Error object when they don't.
+    """
+
     def __init__(self, paths, key_map=None):
+        """Create a multi-path constraint for the list of paths `path`.
+
+        :param paths: The list of paths this multi-path constraint is for.
+        :param key_map: The key map, that maps the keys in the value to be
+            checked to the foreign key fields in the model at the start of the
+            path.
+
+        :returns: An `Error` object, truthy, with a description of the error, if
+                  the paths lead to different instances, a trivial and falsy
+                  `Error` object otherwise.
+        """
         self._key_map = key_map or (lambda x: x)
         self._paths = paths
         self._foreign_keys = self._get_foreign_keys(paths)
 
     def _get_foreign_keys(self, paths):
+        """
+        Construct a dict of the foreign key fields in the joint start of the
+        paths, to a tuple containing the column referred to by the foreign key
+        in the second table in the path, and the path itself.
+        """
         result = {}
         base = self._paths[0][0]
         for fk in base.foreign_keys:
@@ -183,6 +205,11 @@ class MultiPathConstraint(BaseConstraints):
         return result
 
     def check(self, val, **ctx):
+        """Check the MultiPath constraint on `val`.
+
+        The context should contain a key `session` that maps to a SQLAlchemy
+        session.
+        """
         if 'session' not in ctx:
             return Error()
         session = ctx['session']
@@ -202,13 +229,19 @@ class MultiPathConstraint(BaseConstraints):
             return Error()
         return Error({"bla": Error("")})
 
-        # TODO: add in val to constrain the result of query
-        # 1. build list of triples (foreign key, relevant keys in val, path)
-
     @staticmethod
     def _path_query(session, fk_column, path, v):
+        """Create a query that returns the instance at the end of the path."""
         it = reversed(path[1:])
         query = session.query(next(it))
         for tb in it:
             query = query.join(tb)
         return query.filter(fk_column == v)
+
+
+def create_multi_path_constraints(model):
+    def adj(tb):
+        return [fk.column.table for fk in tb.foreign_keys]
+
+    paths = multi_paths(adj, model)
+    return paths

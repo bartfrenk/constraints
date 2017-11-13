@@ -1,7 +1,7 @@
 from collections import deque, defaultdict
 
 
-def multipaths(adj_fn, start, singles=False):
+def multi_paths(adj_fn, start, singles=False):
     """List disjoint paths from start to all reachable vertices.
 
     :param adj_fn: The adjacency function of the graph, see `bfs`.

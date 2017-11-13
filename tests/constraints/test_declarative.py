@@ -153,12 +153,12 @@ class TestMultiPathConstraints(object):
         sess.add(ChildA(child_id=1, parent_id=1, name='A'))
         sess.add(ChildB(child_id=1, parent_id=1, name='B'))
         sess.commit()
-
         paths = [[GrandChild.__table__, ChildA.__table__, Parent.__table__],
-                 [GrandChild.__table__, ChildA.__table__, Parent.__table__]]
+                 [GrandChild.__table__, ChildB.__table__, Parent.__table__]]
         cn = sut.MultiPathConstraint(paths)
 
         actual = cn.check({"parent_a_id": 1, "parent_b_id": 1}, session=sess)
+
         assert not actual
 
     def test_error_when_two_paths_lead_to_different_object(self, sess):
@@ -167,11 +167,12 @@ class TestMultiPathConstraints(object):
         sess.add(ChildA(child_id=1, parent_id=1, name='A'))
         sess.add(ChildB(child_id=1, parent_id=2, name='B'))
         sess.commit()
-
-        result = sut.find_paths(GrandChild.__table__)
-        cn = sut.MultiPathConstraint(result.values()[0])
+        paths = [[GrandChild.__table__, ChildA.__table__, Parent.__table__],
+                 [GrandChild.__table__, ChildB.__table__, Parent.__table__]]
+        cn = sut.MultiPathConstraint(paths)
 
         actual = cn.check({"parent_a_id": 1, "parent_b_id": 1}, session=sess)
+
         assert actual
 
     def test_error_when_some_paths_lead_to_different_object(self, sess):
@@ -182,8 +183,12 @@ class TestMultiPathConstraints(object):
         sess.add(ChildC(child_id=1, parent_id=2, name='C'))
         sess.commit()
 
-        result = sut.find_paths(TripleGrandChild.__table__)
-        cn = sut.MultiPathConstraint(result.values()[0])
+        paths = [
+            [TripleGrandChild.__table__, ChildA.__table__, Parent.__table__],
+            [TripleGrandChild.__table__, ChildB.__table__, Parent.__table__],
+            [TripleGrandChild.__table__, ChildC.__table__, Parent.__table__]
+        ]
+        cn = sut.MultiPathConstraint(paths)
 
         actual = cn.check({"parent_a_id": 1,
                            "parent_b_id": 1,
