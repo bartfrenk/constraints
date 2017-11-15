@@ -6,9 +6,6 @@
 constraints.declarative
 =======================
 
-.. automodule:: constraints.declarative
-   :members:
-
 Given the following SQL alchemy models.
 
 .. code-block:: python
@@ -49,5 +46,5 @@ Create constraints to validate representations of the Child entity.
 >>> obj = {"parentId": 1, "name": 11 * "x"}
 >>> cn.check(obj, session=session)
 
-.. autoclass:: constraints.declarative.FromModel
+.. automodule:: constraints.declarative
    :members:

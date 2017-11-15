@@ -9,9 +9,10 @@ from .traversal import multi_paths
 
 
 class FromModel(BaseConstraints):
+    """Constraints derived from a SQLAlchemy model."""
+
     def __init__(self, model, key_map=None, forbidden=None):
-        """
-        Create constraints from a SQLAlchemy model.
+        """Create constraints from a SQLAlchemy model.
 
         :param model: The model to derive the constraints from.
         :param key_map: The map from column names to allowed keys in the dict.
@@ -95,7 +96,13 @@ class FromModel(BaseConstraints):
 
 
 class ForeignKeyExists(BaseConstraints):
+    """Constraint that checks whether a foreign key exists."""
+
     def __init__(self, fk):
+        """Create a constraint.
+
+        :param fk: The foreign key to check for.
+        """
         self._fk = fk
 
     @staticmethod
@@ -106,6 +113,12 @@ class ForeignKeyExists(BaseConstraints):
         return [fk.parent == getattr(within, key) for (fk, key) in refs]
 
     def check(self, val, **ctx):
+        """Check the constraint.
+
+        :param val: The value to check.
+        :param ctx: The context.  Should contain a session, and may contain a
+            'within' parameter.  See 'FromModel'.
+        """
         if 'session' not in ctx:
             return Error()
         session = ctx['session']
@@ -122,8 +135,15 @@ class ForeignKeyExists(BaseConstraints):
 
 
 class Unique(BaseConstraints):
+    """Constraint that checks whether a uniqueness constraint is violated."""
+
     def __init__(self, unique, key_map=None):
-        # TODO: better name for unique, and document
+        """Creates a constraint from a SQLAlchemy uniqueness constraint.
+
+        :param unique: The uniqueness constraint.
+        :param key_map: The map from model attributes to keys in the dict.
+        """
+
         self._unique = unique
         self._pk = self._primary_key(unique)
         self._key_map = key_map or (lambda x: x)
@@ -140,6 +160,16 @@ class Unique(BaseConstraints):
             return False
 
     def check(self, val, **ctx):
+        """Checks the uniqueness constraint.
+
+        Requires a SQLAlchemy session to be in the context under the key
+        'session'.
+
+        :param val: The value to check.
+
+        :returns: An Error object.
+        """
+
         if 'session' not in ctx:
             return Error()
         session = ctx['session']
