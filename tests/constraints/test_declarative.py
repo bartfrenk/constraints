@@ -6,7 +6,7 @@ from .fixtures import Parent, ChildA, ChildB, ChildC, GrandChild, TripleGrandChi
 from .fixtures import sess  # pylint: disable=unused-import
 
 
-class TestDeclarative(object):
+class TestFromModel(object):
     def test_missing_non_nullable_returns_error(self, sess):
         cn = sut.FromModel(ChildA)
         actual = cn.check({"child_id": 1}, session=sess)
@@ -52,6 +52,7 @@ class TestDeclarative(object):
         assert actual == Error({"name": Error("max-size", "duplicate")})
 
     def test_consider_foreign_key_dangling_when_out_of_context(self, sess):
+        # TODO: refactor this test
         cn = sut.FromModel(ChildA)
         owner = Owner(owner_id=1)
         sess.add(owner)
@@ -64,6 +65,35 @@ class TestDeclarative(object):
                           within=owner)
 
         assert actual == Error({"parent_id": Error("does-not-exist")})
+
+    def test_multi_path_constraints_trigger(self, sess):
+        # TODO: refactor this test
+        sess.add(Parent(parent_id=1))
+        sess.add(Parent(parent_id=2))
+        sess.add(ChildA(child_id=1, parent_id=1, name='A'))
+        sess.add(ChildB(child_id=1, parent_id=2, name='B'))
+        sess.commit()
+        cn = sut.FromModel(GrandChild)
+
+        actual = cn.check({"parent_a_id": 1, "parent_b_id": 1}, session=sess)
+
+        unwrapped = actual.unwrap()
+        assert len(unwrapped) == 1
+        assert set(unwrapped[0].keys()[0]) == {"parent_a_id", "parent_b_id"}
+        assert unwrapped[0].keys()[1] == "name"
+        assert unwrapped[0].values() == [["mismatch (parent)"], ["missing"]]
+
+    def test_ignore_correctly_applied_to_multi_path_constraints(self, sess):
+        sess.add(Parent(parent_id=1))
+        sess.add(Parent(parent_id=2))
+        sess.add(ChildA(child_id=1, parent_id=1, name='A'))
+        sess.add(ChildB(child_id=1, parent_id=2, name='B'))
+        sess.commit()
+        cn = sut.FromModel(GrandChild, ignore=set([Parent]))
+
+        actual = cn.check({"parent_a_id": 1, "parent_b_id": 1}, session=sess)
+
+        assert actual == Error({"name": Error("missing")})
 
 
 class TestMultiPathConstraints(object):

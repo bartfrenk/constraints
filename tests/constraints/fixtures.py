@@ -71,6 +71,7 @@ class GrandChild(Base):
 
     parent_a_id = Column(Integer, ForeignKey("child_a.child_id"))
     parent_b_id = Column(Integer, ForeignKey("child_b.child_id"))
+    name = Column(String(2), nullable=False)
 
 
 class TripleGrandChild(Base):

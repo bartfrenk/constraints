@@ -11,18 +11,21 @@ from .traversal import multi_paths
 class FromModel(BaseConstraints):
     """Constraints derived from a SQLAlchemy model."""
 
-    def __init__(self, model, key_map=None, forbidden=None):
+    def __init__(self, model, key_map=None, forbidden=None, ignore=None):
         """Create constraints from a SQLAlchemy model.
 
         :param model: The model to derive the constraints from.
         :param key_map: The map from column names to allowed keys in the dict.
         :param forbidden: Set of forbidden column names.
+        :param ignore: The models to ignore as endpoints for multipath constraints.
         """
         self._model = model
         self._forbidden = forbidden or set()
         self._key_map = key_map or (lambda x: x)
         self._per_field_cns = self._create_per_field_cns()
         self._root_cns = self._create_root_cns()
+        self._multi_path_cns = self._create_multi_path_constraints(ignore or
+                                                                   set())
 
     def check(self, val, **ctx):
         """Check constraints on value.
@@ -45,6 +48,8 @@ class FromModel(BaseConstraints):
         """
         errors = self._per_field_cns(val, **ctx)
         for c in self._root_cns:
+            errors.merge(c.check(val, **ctx))
+        for c in self._multi_path_cns:
             errors.merge(c.check(val, **ctx))
         return errors
 
@@ -87,6 +92,12 @@ class FromModel(BaseConstraints):
             if isinstance(cons, UniqueConstraint):
                 root_cns.append(Unique(cons, self._key_map))
         return root_cns
+
+    def _create_multi_path_constraints(self, ignore):
+        start_tbl = self._model.__table__
+        ignore_tbls = set(model.__table__ for model in ignore)
+        return create_multi_path_constraints(start_tbl, self._key_map,
+                                             ignore_tbls)
 
     def add_constraint(self, constraint):
         self._root_cns.append(constraint)
@@ -278,6 +289,7 @@ def create_multi_path_constraints(start_tbl, key_map=None, ignore=None):
     :param start_tbl: The table for which to create the multi-path constraints.
     :param key_map: The key map, mapping fields of the value to check to
         attributes of the model.
+    :param ignore: The set of tables to ignore as path endpoints.
 
     :returns: A list of `MultiPathConstraint` instances, one for each set of
               multi-paths starting from `start_tbl` and ending in a table not in
