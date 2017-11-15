@@ -208,9 +208,7 @@ class MultiPathConstraint(BaseConstraints):
         """Create a multi-path constraint for the list of paths `path`.
 
         :param paths: The list of paths this multi-path constraint is for.
-        :param key_map: The key map, that maps the keys in the value to be
-            checked to the foreign key fields in the model at the start of the
-            path.
+        :param key_map: Maps the model attributes to the keys in the value to be checked.
 
         :returns: An `Error` object, truthy, with a description of the error, if
                   the paths lead to different instances, a trivial and falsy
@@ -234,8 +232,7 @@ class MultiPathConstraint(BaseConstraints):
 
         results = set()
         mismatches = []
-        for (field, v) in val.items():
-            key = self._key_map(field)
+        for (key, v) in val.items():
             if key in self._foreign_keys:
                 (fk_column, path) = self._foreign_keys[key]
                 query = self._path_query(session, fk_column, path, v)
@@ -247,8 +244,7 @@ class MultiPathConstraint(BaseConstraints):
         return Error({tuple(mismatches):
                       Error("mismatch ({})".format(self._end_table_name))})
 
-    @staticmethod
-    def _get_foreign_keys(paths):
+    def _get_foreign_keys(self, paths):
         """
         Construct a dict of the foreign key fields in the joint start of the
         paths, to a tuple containing the column referred to by the foreign key
@@ -259,7 +255,7 @@ class MultiPathConstraint(BaseConstraints):
         for fk in start.foreign_keys:
             for path in paths:
                 if fk.references(path[1]):
-                    result[fk.parent.name] = (fk.column, path)
+                    result[self._key_map(fk.parent.name)] = (fk.column, path)
         return result
 
     @property

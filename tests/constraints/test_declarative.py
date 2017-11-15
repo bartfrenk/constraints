@@ -67,6 +67,7 @@ class TestDeclarative(object):
 
 
 class TestMultiPathConstraints(object):
+    # TODO: refactor these tests
     def test_no_error_when_paths_lead_to_identical_object(self, sess):
         sess.add(Parent(parent_id=1))
         sess.add(ChildA(child_id=1, parent_id=1, name='A'))
@@ -96,6 +97,25 @@ class TestMultiPathConstraints(object):
         assert len(unwrapped) == 1
         assert set(*unwrapped[0].keys()) == {"parent_a_id", "parent_b_id"}
         assert unwrapped[0].values() == [["mismatch (parent)"]]
+
+    def test_that_key_map_is_applied_appropriately(self, sess):
+        def key_map(attr):
+            if attr == "parent_a_id":
+                return "A"
+            elif attr == "parent_b_id":
+                return "B"
+
+        sess.add(Parent(parent_id=1))
+        sess.add(ChildA(child_id=1, parent_id=1, name='A'))
+        sess.add(ChildB(child_id=1, parent_id=1, name='B'))
+        sess.commit()
+        paths = [[GrandChild.__table__, ChildA.__table__, Parent.__table__],
+                 [GrandChild.__table__, ChildB.__table__, Parent.__table__]]
+        cn = sut.MultiPathConstraint(paths, key_map=key_map)
+
+        actual = cn.check({"A": 1, "B": 1}, session=sess)
+
+        assert not actual
 
     def test_error_when_some_paths_lead_to_different_object(self, sess):
         sess.add(Parent(parent_id=1))
