@@ -32,3 +32,7 @@ Clone this repository, and run `make` for a set of options. To build the Sphinx 
 ```
 make build-docs
 ```
+
+## Documentation
+
+Online documentation to be found at https://bartfrenk.github.io/constraints/build/index.html.
