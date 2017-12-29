@@ -1,0 +1,535 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>constraints.declarative &mdash; Constraints 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="Constraints 0.1 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Constraints
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/base.html">constraints.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/error.html">constraints.error</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/declarative.html">constraints.declarative</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/traversal.html">constraints.traversal</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Constraints</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>constraints.declarative</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for constraints.declarative</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Create constraint objects from SQLAlchemy models.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="k">import</span> <span class="n">UniqueConstraint</span>
+
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">InstanceOf</span><span class="p">,</span> <span class="n">MaxSize</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">BaseConstraints</span>
+<span class="kn">from</span> <span class="nn">.error</span> <span class="k">import</span> <span class="n">Error</span>
+<span class="kn">from</span> <span class="nn">.traversal</span> <span class="k">import</span> <span class="n">multi_paths</span>
+
+
+<div class="viewcode-block" id="FromModel"><a class="viewcode-back" href="../../modules/declarative.html#constraints.declarative.FromModel">[docs]</a><span class="k">class</span> <span class="nc">FromModel</span><span class="p">(</span><span class="n">BaseConstraints</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Constraints derived from a SQLAlchemy model.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">key_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">forbidden</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create constraints from a SQLAlchemy model.</span>
+
+<span class="sd">        :param model: The model to derive the constraints from.</span>
+<span class="sd">        :param key_map: The map from column names to allowed keys in the dict.</span>
+<span class="sd">        :param forbidden: Set of forbidden column names.</span>
+<span class="sd">        :param ignore: The models to ignore as endpoints for multipath constraints.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_forbidden</span> <span class="o">=</span> <span class="n">forbidden</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span> <span class="o">=</span> <span class="n">key_map</span> <span class="ow">or</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_per_field_cns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_per_field_cns</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_root_cns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_root_cns</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_multi_path_cns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_multi_path_constraints</span><span class="p">(</span><span class="n">ignore</span> <span class="ow">or</span>
+                                                                   <span class="nb">set</span><span class="p">())</span>
+
+<div class="viewcode-block" id="FromModel.check"><a class="viewcode-back" href="../../modules/declarative.html#constraints.declarative.FromModel.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="o">**</span><span class="n">ctx</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check constraints on value.</span>
+
+<span class="sd">        :param val: The value to check.</span>
+<span class="sd">        :param ctx: The context in which to run the check, this may include the</span>
+<span class="sd">            following keyword parameters:</span>
+
+<span class="sd">                - session: The SQLAlchemy session, passing this allows the</span>
+<span class="sd">                  checker to do database queries to verify constraints.</span>
+
+<span class="sd">                - within: A SQLAlchemy entity, if passed, foreign keys are</span>
+<span class="sd">                  considered dangling if they refer to an entity whose model has</span>
+<span class="sd">                  a foreign key relation to the model of the entity passed to</span>
+<span class="sd">                  within, but that foreign key does not refer to the `within`</span>
+<span class="sd">                  entity.</span>
+
+<span class="sd">        :returns: A falsy `Error` object, if constraints are not satisfied, the</span>
+<span class="sd">                  truthy one otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_field_cns</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="o">**</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root_cns</span><span class="p">:</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="o">**</span><span class="n">ctx</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multi_path_cns</span><span class="p">:</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="o">**</span><span class="n">ctx</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">errors</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_is_optional</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">col</span><span class="o">.</span><span class="n">nullable</span> <span class="ow">or</span> <span class="n">col</span><span class="o">.</span><span class="n">primary_key</span> <span class="ow">or</span> \
+            <span class="n">col</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> \
+            <span class="n">col</span><span class="o">.</span><span class="n">server_default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_create_per_field_cns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">optional</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">__table__</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">ty</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">type</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_optional</span><span class="p">(</span><span class="n">col</span><span class="p">):</span>
+                <span class="n">optional</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">constraints</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ty</span><span class="p">,</span> <span class="s2">&quot;python_type&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">ty</span><span class="o">.</span><span class="n">python_type</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+                    <span class="n">constraints</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">InstanceOf</span><span class="p">(</span><span class="n">basestring</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">ty</span><span class="o">.</span><span class="n">python_type</span> <span class="ow">is</span> <span class="n">datetime</span><span class="p">:</span>
+                    <span class="n">constraints</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">InstanceOf</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">constraints</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">InstanceOf</span><span class="p">(</span><span class="n">ty</span><span class="o">.</span><span class="n">python_type</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ty</span><span class="p">,</span> <span class="s2">&quot;length&quot;</span><span class="p">):</span>
+                <span class="n">constraints</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MaxSize</span><span class="p">(</span><span class="n">ty</span><span class="o">.</span><span class="n">length</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">fk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">foreign_keys</span><span class="p">):</span>
+                <span class="n">constraints</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ForeignKeyExists</span><span class="p">(</span><span class="n">fk</span><span class="p">))</span>
+
+        <span class="n">per_field_cns</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">(</span><span class="o">**</span><span class="n">constraints</span><span class="p">)</span>
+        <span class="n">per_field_cns</span><span class="o">.</span><span class="n">optional</span> <span class="o">=</span> <span class="n">optional</span>
+        <span class="n">per_field_cns</span><span class="o">.</span><span class="n">forbidden</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                                   <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forbidden</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">per_field_cns</span>
+
+    <span class="k">def</span> <span class="nf">_create_root_cns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">root_cns</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cons</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">__table__</span><span class="o">.</span><span class="n">constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cons</span><span class="p">,</span> <span class="n">UniqueConstraint</span><span class="p">):</span>
+                <span class="n">root_cns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Unique</span><span class="p">(</span><span class="n">cons</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">root_cns</span>
+
+    <span class="k">def</span> <span class="nf">_create_multi_path_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignore</span><span class="p">):</span>
+        <span class="n">start_tbl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">__table__</span>
+        <span class="n">ignore_tbls</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">__table__</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">ignore</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">create_multi_path_constraints</span><span class="p">(</span><span class="n">start_tbl</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span><span class="p">,</span>
+                                             <span class="n">ignore_tbls</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_root_cns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">{}</span><span class="s1">(</span><span class="si">{}</span><span class="s1">)&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ForeignKeyExists"><a class="viewcode-back" href="../../modules/declarative.html#constraints.declarative.ForeignKeyExists">[docs]</a><span class="k">class</span> <span class="nc">ForeignKeyExists</span><span class="p">(</span><span class="n">BaseConstraints</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Constraint that checks whether a foreign key exists.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fk</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a constraint.</span>
+
+<span class="sd">        :param fk: The foreign key to check for.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fk</span> <span class="o">=</span> <span class="n">fk</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_within_filter</span><span class="p">(</span><span class="n">pk_column</span><span class="p">,</span> <span class="n">within</span><span class="p">):</span>
+        <span class="n">fks</span> <span class="o">=</span> <span class="n">pk_column</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">foreign_keys</span>
+        <span class="n">refs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">fk</span><span class="p">,</span> <span class="n">fk</span><span class="o">.</span><span class="n">get_referent</span><span class="p">(</span><span class="n">within</span><span class="o">.</span><span class="n">__table__</span><span class="p">)</span><span class="o">.</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">fk</span> <span class="ow">in</span> <span class="n">fks</span>
+                <span class="k">if</span> <span class="n">fk</span><span class="o">.</span><span class="n">references</span><span class="p">(</span><span class="n">within</span><span class="o">.</span><span class="n">__table__</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">fk</span><span class="o">.</span><span class="n">parent</span> <span class="o">==</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">within</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">fk</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="n">refs</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ForeignKeyExists.check"><a class="viewcode-back" href="../../modules/declarative.html#constraints.declarative.ForeignKeyExists.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="o">**</span><span class="n">ctx</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check the constraint.</span>
+
+<span class="sd">        :param val: The value to check.</span>
+<span class="sd">        :param ctx: The context.  Should contain a session, and may contain a</span>
+<span class="sd">            &#39;within&#39; parameter.  See &#39;FromModel&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;session&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ctx</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Error</span><span class="p">()</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s1">&#39;session&#39;</span><span class="p">]</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fk</span><span class="o">.</span><span class="n">column</span>
+        <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span> <span class="o">==</span> <span class="n">val</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;within&#39;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="p">:</span>
+            <span class="n">within</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s1">&#39;within&#39;</span><span class="p">]</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_create_within_filter</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">within</span><span class="p">))</span>
+        <span class="n">exists</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">column</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">*</span><span class="n">filters</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exists</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Error</span><span class="p">(</span><span class="s2">&quot;does-not-exist&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Error</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="Unique"><a class="viewcode-back" href="../../modules/declarative.html#constraints.declarative.Unique">[docs]</a><span class="k">class</span> <span class="nc">Unique</span><span class="p">(</span><span class="n">BaseConstraints</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Constraint that checks whether a uniqueness constraint is violated.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique</span><span class="p">,</span> <span class="n">key_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates a constraint from a SQLAlchemy uniqueness constraint.</span>
+
+<span class="sd">        :param unique: The uniqueness constraint.</span>
+<span class="sd">        :param key_map: The map from model attributes to keys in the dict.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unique</span> <span class="o">=</span> <span class="n">unique</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span><span class="p">(</span><span class="n">unique</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span> <span class="o">=</span> <span class="n">key_map</span> <span class="ow">or</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique</span><span class="p">):</span>
+        <span class="c1"># pylint: disable=no-self-use</span>
+        <span class="k">return</span> <span class="n">unique</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">primary_key</span><span class="o">.</span><span class="n">columns</span>
+
+    <span class="k">def</span> <span class="nf">_is_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exists</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pks</span> <span class="o">=</span> <span class="p">[</span><span class="n">val</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">key</span><span class="p">)]</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pk</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">pks</span> <span class="o">==</span> <span class="nb">list</span><span class="p">(</span><span class="n">exists</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="Unique.check"><a class="viewcode-back" href="../../modules/declarative.html#constraints.declarative.Unique.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="o">**</span><span class="n">ctx</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Checks the uniqueness constraint.</span>
+
+<span class="sd">        Requires a SQLAlchemy session to be in the context under the key</span>
+<span class="sd">        &#39;session&#39;.</span>
+
+<span class="sd">        :param val: The value to check.</span>
+
+<span class="sd">        :returns: An Error object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="s1">&#39;session&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ctx</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Error</span><span class="p">()</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s1">&#39;session&#39;</span><span class="p">]</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unique</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">exists</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="n">val</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">):</span>
+            <span class="n">filters</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="o">==</span> <span class="n">val</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">key</span><span class="p">)]</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]</span>
+            <span class="n">exists</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_pk</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">*</span><span class="n">filters</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">exists</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_entity</span><span class="p">(</span><span class="n">exists</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">col</span><span class="o">.</span><span class="n">foreign_keys</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Error</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">key</span><span class="p">):</span> <span class="n">Error</span><span class="p">(</span><span class="s2">&quot;duplicate&quot;</span><span class="p">)})</span>
+            <span class="k">return</span> <span class="n">Error</span><span class="p">(</span><span class="s2">&quot;duplicate&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Error</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="MultiPathConstraint"><a class="viewcode-back" href="../../modules/declarative.html#constraints.declarative.MultiPathConstraint">[docs]</a><span class="k">class</span> <span class="nc">MultiPathConstraint</span><span class="p">(</span><span class="n">BaseConstraints</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A multi-path constraint checks whether two distinct foreing key chains,</span>
+<span class="sd">    starting at some base table lead to the same instance.  For example,</span>
+
+<span class="sd">    Given the following chains of foreign keys (with the table containing the</span>
+<span class="sd">    foreign key at the tail of the arrow):</span>
+
+<span class="sd">        - GrandChild --&gt; ChildA --&gt; Parent</span>
+
+<span class="sd">        - GrandChild --&gt; ChildB --&gt; Parent</span>
+
+<span class="sd">    and a dict of values `val` for the ChildA and ChildB foreign keys in</span>
+<span class="sd">    GrandChild.  A multi-path constraint of the list of paths ``[[GrandChild,</span>
+<span class="sd">    ChildA, Parent], [GrandChild, ChildB, Parent]]``, checks whether the ChildA</span>
+<span class="sd">    and ChildB instances referred to by the foreign keys in `val` point to the</span>
+<span class="sd">    same Parent instance, and it returns a truthy Error object when they don&#39;t.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">paths</span><span class="p">,</span> <span class="n">key_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a multi-path constraint for the list of paths `path`.</span>
+
+<span class="sd">        :param paths: The list of paths this multi-path constraint is for.</span>
+<span class="sd">        :param key_map: Maps the model attributes to the keys in the value to be checked.</span>
+
+<span class="sd">        :returns: An `Error` object, truthy, with a description of the error, if</span>
+<span class="sd">                  the paths lead to different instances, a trivial and falsy</span>
+<span class="sd">                  `Error` object otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span> <span class="o">=</span> <span class="n">key_map</span> <span class="ow">or</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_foreign_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_foreign_keys</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MultiPathConstraint.check"><a class="viewcode-back" href="../../modules/declarative.html#constraints.declarative.MultiPathConstraint.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="o">**</span><span class="n">ctx</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check the MultiPath constraint on `val`.</span>
+
+<span class="sd">        The context should contain a key `session` that maps to a SQLAlchemy</span>
+<span class="sd">        session.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;session&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ctx</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Error</span><span class="p">()</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s1">&#39;session&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Error</span><span class="p">()</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">mismatches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">val</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_foreign_keys</span><span class="p">:</span>
+                <span class="p">(</span><span class="n">fk_column</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_foreign_keys</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path_query</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">fk_column</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">query</span><span class="p">:</span>
+                    <span class="n">results</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                    <span class="n">mismatches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Error</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Error</span><span class="p">({</span><span class="nb">tuple</span><span class="p">(</span><span class="n">mismatches</span><span class="p">):</span>
+                      <span class="n">Error</span><span class="p">(</span><span class="s2">&quot;mismatch (</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_end_table_name</span><span class="p">))})</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_foreign_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">paths</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a dict of the foreign key fields in the joint start of the</span>
+<span class="sd">        paths, to a tuple containing the column referred to by the foreign key</span>
+<span class="sd">        in the second table in the path, and the path itself.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">fk</span> <span class="ow">in</span> <span class="n">start</span><span class="o">.</span><span class="n">foreign_keys</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fk</span><span class="o">.</span><span class="n">references</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                    <span class="n">result</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_map</span><span class="p">(</span><span class="n">fk</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fk</span><span class="o">.</span><span class="n">column</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_end_table_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_foreign_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_path_query</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">fk_column</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">it</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">tb</span> <span class="ow">in</span> <span class="n">it</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tb</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">fk_column</span> <span class="o">==</span> <span class="n">v</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_multi_path_constraints"><a class="viewcode-back" href="../../modules/declarative.html#constraints.declarative.create_multi_path_constraints">[docs]</a><span class="k">def</span> <span class="nf">create_multi_path_constraints</span><span class="p">(</span><span class="n">start_tbl</span><span class="p">,</span> <span class="n">key_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create the complete list of multi-path constraints that start at</span>
+<span class="sd">    `start_tbl`.  Ignores paths that end in a table contained in `ignore`.</span>
+
+<span class="sd">    :param start_tbl: The table for which to create the multi-path constraints.</span>
+<span class="sd">    :param key_map: The key map, mapping fields of the value to check to</span>
+<span class="sd">        attributes of the model.</span>
+<span class="sd">    :param ignore: The set of tables to ignore as path endpoints.</span>
+
+<span class="sd">    :returns: A list of `MultiPathConstraint` instances, one for each set of</span>
+<span class="sd">              multi-paths starting from `start_tbl` and ending in a table not in</span>
+<span class="sd">              `ignore`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ignore</span> <span class="o">=</span> <span class="n">ignore</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">adj</span><span class="p">(</span><span class="n">tb</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">fk</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">table</span> <span class="k">for</span> <span class="n">fk</span> <span class="ow">in</span> <span class="n">tb</span><span class="o">.</span><span class="n">foreign_keys</span><span class="p">]</span>
+
+    <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">end_tbl_to_paths</span> <span class="o">=</span> <span class="n">multi_paths</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">start_tbl</span><span class="p">)</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">end_tbl</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span> <span class="ow">in</span> <span class="n">end_tbl_to_paths</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">end_tbl</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ignore</span><span class="p">:</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MultiPathConstraint</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">key_map</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">constraints</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Bart Frenk.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,477 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>constraints.declarative &mdash; Constraints 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="Constraints 0.1 documentation" href="../index.html"/>
+        <link rel="next" title="constraints.traversal" href="traversal.html"/>
+        <link rel="prev" title="constraints.error" href="error.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Constraints
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Modules</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="base.html">constraints.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="error.html">constraints.error</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">constraints.declarative</a></li>
+<li class="toctree-l1"><a class="reference internal" href="traversal.html">constraints.traversal</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Constraints</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>constraints.declarative</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/modules/declarative.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="constraints-declarative">
+<h1>constraints.declarative<a class="headerlink" href="#constraints-declarative" title="Permalink to this headline">¶</a></h1>
+<p>Given the following SQL alchemy models.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy.ext.declarative</span> <span class="kn">import</span> <span class="n">declarative_base</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> \
+    <span class="n">Boolean</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">,</span> <span class="n">create_engine</span><span class="p">,</span> <span class="n">UniqueConstraint</span>
+
+<span class="kn">from</span> <span class="nn">constrainst.declarative</span> <span class="kn">import</span> <span class="n">FromModel</span>
+
+
+<span class="k">class</span> <span class="nc">Parent</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;parent&quot;</span>
+
+    <span class="n">parent_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;child&quot;</span>
+
+    <span class="n">child_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">opt</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+
+    <span class="n">parent_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;parent.parent_id&quot;</span><span class="p">))</span>
+    <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">UniqueConstraint</span><span class="p">(</span><span class="s2">&quot;parent_id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">to_camel_case</span><span class="p">(</span><span class="n">snake_str</span><span class="p">):</span>
+    <span class="n">components</span> <span class="o">=</span> <span class="n">snake_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">components</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">title</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">components</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+</pre></div>
+</div>
+<p>Create constraints to validate representations of the Child entity.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cn</span> <span class="o">=</span> <span class="n">FromModel</span><span class="p">(</span><span class="n">Child</span><span class="p">,</span> <span class="n">key_map</span><span class="o">=</span><span class="n">to_camel_case</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;parentId&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="mi">11</span> <span class="o">*</span> <span class="s2">&quot;x&quot;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cn</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="n">session</span><span class="p">)</span>
+</pre></div>
+</div>
+<span class="target" id="module-constraints.declarative"></span><p>Create constraint objects from SQLAlchemy models.</p>
+<dl class="class">
+<dt id="constraints.declarative.ForeignKeyExists">
+<em class="property">class </em><code class="descname">ForeignKeyExists</code><span class="sig-paren">(</span><em>fk</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/constraints/declarative.html#ForeignKeyExists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#constraints.declarative.ForeignKeyExists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constraint that checks whether a foreign key exists.</p>
+<p>Create a constraint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fk</strong> – The foreign key to check for.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="constraints.declarative.ForeignKeyExists.check">
+<code class="descname">check</code><span class="sig-paren">(</span><em>val</em>, <em>**ctx</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/constraints/declarative.html#ForeignKeyExists.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#constraints.declarative.ForeignKeyExists.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the constraint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>val</strong> – The value to check.</li>
+<li><strong>ctx</strong> – The context.  Should contain a session, and may contain a
+‘within’ parameter.  See ‘FromModel’.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="constraints.declarative.FromModel">
+<em class="property">class </em><code class="descname">FromModel</code><span class="sig-paren">(</span><em>model</em>, <em>key_map=None</em>, <em>forbidden=None</em>, <em>ignore=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/constraints/declarative.html#FromModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#constraints.declarative.FromModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constraints derived from a SQLAlchemy model.</p>
+<p>Create constraints from a SQLAlchemy model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model</strong> – The model to derive the constraints from.</li>
+<li><strong>key_map</strong> – The map from column names to allowed keys in the dict.</li>
+<li><strong>forbidden</strong> – Set of forbidden column names.</li>
+<li><strong>ignore</strong> – The models to ignore as endpoints for multipath constraints.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="constraints.declarative.FromModel.check">
+<code class="descname">check</code><span class="sig-paren">(</span><em>val</em>, <em>**ctx</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/constraints/declarative.html#FromModel.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#constraints.declarative.FromModel.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check constraints on value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>val</strong> – The value to check.</li>
+<li><strong>ctx</strong> – <p>The context in which to run the check, this may include the
+following keyword parameters:</p>
+<blockquote>
+<div><ul>
+<li>session: The SQLAlchemy session, passing this allows the
+checker to do database queries to verify constraints.</li>
+<li>within: A SQLAlchemy entity, if passed, foreign keys are
+considered dangling if they refer to an entity whose model has
+a foreign key relation to the model of the entity passed to
+within, but that foreign key does not refer to the <cite>within</cite>
+entity.</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A falsy <cite>Error</cite> object, if constraints are not satisfied, the
+truthy one otherwise.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="constraints.declarative.MultiPathConstraint">
+<em class="property">class </em><code class="descname">MultiPathConstraint</code><span class="sig-paren">(</span><em>paths</em>, <em>key_map=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/constraints/declarative.html#MultiPathConstraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#constraints.declarative.MultiPathConstraint" title="Permalink to this definition">¶</a></dt>
+<dd><p>A multi-path constraint checks whether two distinct foreing key chains,
+starting at some base table lead to the same instance.  For example,</p>
+<p>Given the following chains of foreign keys (with the table containing the
+foreign key at the tail of the arrow):</p>
+<blockquote>
+<div><ul class="simple">
+<li>GrandChild –&gt; ChildA –&gt; Parent</li>
+<li>GrandChild –&gt; ChildB –&gt; Parent</li>
+</ul>
+</div></blockquote>
+<p>and a dict of values <cite>val</cite> for the ChildA and ChildB foreign keys in
+GrandChild.  A multi-path constraint of the list of paths <code class="docutils literal"><span class="pre">[[GrandChild,</span>
+<span class="pre">ChildA,</span> <span class="pre">Parent],</span> <span class="pre">[GrandChild,</span> <span class="pre">ChildB,</span> <span class="pre">Parent]]</span></code>, checks whether the ChildA
+and ChildB instances referred to by the foreign keys in <cite>val</cite> point to the
+same Parent instance, and it returns a truthy Error object when they don’t.</p>
+<p>Create a multi-path constraint for the list of paths <cite>path</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>paths</strong> – The list of paths this multi-path constraint is for.</li>
+<li><strong>key_map</strong> – Maps the model attributes to the keys in the value to be checked.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An <cite>Error</cite> object, truthy, with a description of the error, if
+the paths lead to different instances, a trivial and falsy
+<cite>Error</cite> object otherwise.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="constraints.declarative.MultiPathConstraint.check">
+<code class="descname">check</code><span class="sig-paren">(</span><em>val</em>, <em>**ctx</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/constraints/declarative.html#MultiPathConstraint.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#constraints.declarative.MultiPathConstraint.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the MultiPath constraint on <cite>val</cite>.</p>
+<p>The context should contain a key <cite>session</cite> that maps to a SQLAlchemy
+session.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="constraints.declarative.Unique">
+<em class="property">class </em><code class="descname">Unique</code><span class="sig-paren">(</span><em>unique</em>, <em>key_map=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/constraints/declarative.html#Unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#constraints.declarative.Unique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constraint that checks whether a uniqueness constraint is violated.</p>
+<p>Creates a constraint from a SQLAlchemy uniqueness constraint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>unique</strong> – The uniqueness constraint.</li>
+<li><strong>key_map</strong> – The map from model attributes to keys in the dict.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="constraints.declarative.Unique.check">
+<code class="descname">check</code><span class="sig-paren">(</span><em>val</em>, <em>**ctx</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/constraints/declarative.html#Unique.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#constraints.declarative.Unique.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the uniqueness constraint.</p>
+<p>Requires a SQLAlchemy session to be in the context under the key
+‘session’.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>val</strong> – The value to check.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An Error object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="constraints.declarative.create_multi_path_constraints">
+<code class="descname">create_multi_path_constraints</code><span class="sig-paren">(</span><em>start_tbl</em>, <em>key_map=None</em>, <em>ignore=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/constraints/declarative.html#create_multi_path_constraints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#constraints.declarative.create_multi_path_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the complete list of multi-path constraints that start at
+<cite>start_tbl</cite>.  Ignores paths that end in a table contained in <cite>ignore</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>start_tbl</strong> – The table for which to create the multi-path constraints.</li>
+<li><strong>key_map</strong> – The key map, mapping fields of the value to check to
+attributes of the model.</li>
+<li><strong>ignore</strong> – The set of tables to ignore as path endpoints.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of <cite>MultiPathConstraint</cite> instances, one for each set of
+multi-paths starting from <cite>start_tbl</cite> and ending in a table not in
+<cite>ignore</cite>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="traversal.html" class="btn btn-neutral float-right" title="constraints.traversal" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="error.html" class="btn btn-neutral" title="constraints.error" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Bart Frenk.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
